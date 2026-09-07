@@ -209,6 +209,20 @@ async def test_run_command_rejects_blank_command() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "timeout",
+    [timedelta(milliseconds=-1), timedelta(microseconds=-1), timedelta(microseconds=-999)],
+)
+async def test_run_command_rejects_negative_timeout(timeout: timedelta) -> None:
+    cfg = ConnectionConfig(protocol="http")
+    endpoint = SandboxEndpoint(endpoint="localhost:44772", port=44772)
+    adapter = CommandsAdapter(cfg, endpoint)
+
+    with pytest.raises(InvalidArgumentException):
+        await adapter.run("pwd", opts=RunCommandOpts(timeout=timeout))
+
+
+@pytest.mark.asyncio
 async def test_run_command_non_200_raises_api_exception() -> None:
     transport = _SseTransport()
     cfg = ConnectionConfig(protocol="http", transport=transport)
